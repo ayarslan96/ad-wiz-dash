@@ -20,8 +20,40 @@ serve(async (req) => {
 
     console.log('Analyzing website:', websiteUrl, 'Budget:', budget, 'Goal:', goal);
 
+    // Fetch website content for analysis
+    let websiteContent = '';
+    try {
+      const websiteResponse = await fetch(websiteUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (websiteResponse.ok) {
+        const html = await websiteResponse.text();
+        // Extract text content from HTML (basic extraction)
+        websiteContent = html
+          .replace(/<script[^>]*>.*?<\/script>/gis, '')
+          .replace(/<style[^>]*>.*?<\/style>/gis, '')
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .substring(0, 3000); // Limit content length
+      }
+    } catch (error) {
+      console.log('Failed to fetch website content:', error);
+      websiteContent = 'Website content could not be fetched for analysis.';
+    }
+
     const systemPrompt = `You are an expert marketing strategist specializing in digital advertising and ROAS optimization. 
-Analyze the provided website URL, budget, and goal to create a data-driven marketing strategy.
+Analyze the provided website content, budget, and marketing goal to create a data-driven marketing strategy.
+
+Key analysis points:
+- Identify the business type, target audience, and value proposition from the website content
+- Consider the industry, competition level, and market dynamics
+- Factor in the budget constraints and goal timeline
+- Recommend channels based on actual business model and audience behavior
+- Provide realistic ROAS expectations based on industry benchmarks
 
 Your response must be a valid JSON object with this exact structure:
 {
@@ -30,10 +62,10 @@ Your response must be a valid JSON object with this exact structure:
       "name": "Channel name (e.g., Google Ads, Facebook Ads, etc.)",
       "allocation": percentage as a number (total must equal 100),
       "expectedROAS": expected return as a number,
-      "reasoning": "Brief explanation of why this allocation makes sense"
+      "reasoning": "Brief explanation of why this allocation makes sense for this specific business"
     }
   ],
-  "overallStrategy": "Comprehensive strategy description",
+  "overallStrategy": "Comprehensive strategy description tailored to this business",
   "expectedResults": {
     "projectedRevenue": number,
     "projectedROAS": number,
@@ -41,13 +73,16 @@ Your response must be a valid JSON object with this exact structure:
   }
 }
 
-Focus on realistic, data-driven recommendations based on the website type and goal.`;
+Focus on realistic, data-driven recommendations based on the actual website analysis.`;
 
-    const userPrompt = `Website: ${websiteUrl}
+    const userPrompt = `Website URL: ${websiteUrl}
 Monthly Budget: $${budget}
 Marketing Goal: ${goal}
 
-Provide a detailed marketing strategy with budget allocation across the most effective channels for this business.`;
+Website Content Analysis:
+${websiteContent}
+
+Based on the actual website content above, provide a detailed marketing strategy with budget allocation across the most effective channels for this specific business. Consider the business model, target audience, and value proposition evident from the website content.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -56,7 +91,7 @@ Provide a detailed marketing strategy with budget allocation across the most eff
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
