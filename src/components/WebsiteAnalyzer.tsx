@@ -61,7 +61,7 @@ export const WebsiteAnalyzer = ({
   return <Card className="border-border/50 shadow-card">
       <CardHeader>
         <div>
-          <CardTitle className="font-medium">Website </CardTitle>
+          <CardTitle className="font-medium">Campaign Strategy</CardTitle>
           <CardDescription className="font-semibold">Enter your details to get your marketing playbook</CardDescription>
         </div>
       </CardHeader>
