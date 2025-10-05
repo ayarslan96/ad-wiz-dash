@@ -89,6 +89,20 @@ export const WebsiteAnalyzer = ({ onStrategyGenerated }: WebsiteAnalyzerProps) =
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="goal" className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" />
+            Marketing Goal
+          </Label>
+          <Textarea
+            id="goal"
+            placeholder="e.g., Increase online sales by 50% in the next quarter"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            className="bg-background/50 min-h-[100px]"
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="budget" className="flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-primary" />
             Monthly Budget (USD)
@@ -100,20 +114,6 @@ export const WebsiteAnalyzer = ({ onStrategyGenerated }: WebsiteAnalyzerProps) =
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             className="bg-background/50"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="goal" className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" />
-            Marketing Goal
-          </Label>
-          <Textarea
-            id="goal"
-            placeholder="e.g., Increase online sales by 50% in the next quarter"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            className="bg-background/50 min-h-[100px]"
           />
         </div>
 
