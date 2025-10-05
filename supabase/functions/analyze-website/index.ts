@@ -46,34 +46,42 @@ serve(async (req) => {
     }
 
     const systemPrompt = `You are an expert marketing strategist specializing in digital advertising and ROAS optimization. 
-Analyze the provided website content, budget, and marketing goal to create a data-driven marketing strategy.
-
-Key analysis points:
-- Identify the business type, target audience, and value proposition from the website content
-- Consider the industry, competition level, and market dynamics
-- Factor in the budget constraints and goal timeline
-- Recommend channels based on actual business model and audience behavior
-- Provide realistic ROAS expectations based on industry benchmarks
+Analyze the provided website content, budget, and marketing goal to create a comprehensive, data-driven marketing strategy.
 
 Your response must be a valid JSON object with this exact structure:
 {
+  "websiteAnalysis": "Detailed analysis of what the website/business does, its value proposition, and target audience",
+  "strategicApproach": "Explanation of why this budget allocation strategy makes sense for this specific business and goal",
   "channels": [
     {
-      "name": "Channel name (e.g., Google Ads, Facebook Ads, etc.)",
-      "allocation": percentage as a number (total must equal 100),
-      "expectedROAS": expected return as a number,
-      "reasoning": "Brief explanation of why this allocation makes sense for this specific business"
+      "name": "Channel name (e.g., Google Search Ads, X (Twitter) Ads, etc.)",
+      "allocation": dollar amount as a number,
+      "percentage": percentage as a number,
+      "strategy": "Detailed campaign strategy including targeting, ad creative approach, and tactics",
+      "predictedMetrics": {
+        "dailyBudget": number,
+        "averageCPC": "range as string (e.g., $4.00 - $7.00)",
+        "clicks": "range as string (e.g., 25 - 44)",
+        "conversionRate": "percentage as string (e.g., ~7.0%)",
+        "conversions": "range as string (e.g., 2 - 3)",
+        "costPerAcquisition": "range as string (e.g., $58 - $88)"
+      }
     }
   ],
-  "overallStrategy": "Comprehensive strategy description tailored to this business",
-  "expectedResults": {
-    "projectedRevenue": number,
-    "projectedROAS": number,
-    "timeframe": "e.g., 3 months"
+  "totalPredictedResults": {
+    "totalClicks": "range as string",
+    "totalConversions": "range as string",
+    "blendedCPA": "range as string",
+    "summary": "Brief summary of expected outcomes"
   }
 }
 
-Focus on realistic, data-driven recommendations based on the actual website analysis.`;
+Requirements:
+- Focus on 1-2 high-intent channels that match the budget and goal
+- Provide realistic, data-driven predictions based on industry benchmarks
+- Include specific targeting strategies and ad creative recommendations
+- Calculate precise metrics including CPC, conversion rates, and CPA
+- Ensure all budget allocations add up to the total budget provided`;
 
     const userPrompt = `Website URL: ${websiteUrl}
 Monthly Budget: $${budget}

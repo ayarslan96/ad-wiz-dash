@@ -1,116 +1,196 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { TrendingUp, DollarSign, Target, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface StrategyProps {
   strategy: {
+    websiteAnalysis: string;
+    strategicApproach: string;
     channels: Array<{
       name: string;
       allocation: number;
-      expectedROAS: number;
-      reasoning: string;
+      percentage: number;
+      strategy: string;
+      predictedMetrics: {
+        dailyBudget: number;
+        averageCPC: string;
+        clicks: string;
+        conversionRate: string;
+        conversions: string;
+        costPerAcquisition: string;
+      };
     }>;
-    overallStrategy: string;
-    expectedResults: {
-      projectedRevenue: number;
-      projectedROAS: number;
-      timeframe: string;
+    totalPredictedResults: {
+      totalClicks: string;
+      totalConversions: string;
+      blendedCPA: string;
+      summary: string;
     };
   };
 }
 
 export const StrategyDisplay = ({ strategy }: StrategyProps) => {
-  const chartColors = ["bg-chart-1", "bg-chart-2", "bg-chart-3", "bg-chart-4", "bg-chart-5"];
+  const totalBudget = strategy.channels.reduce((sum, channel) => sum + channel.allocation, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Overall Strategy */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Website & Goal Analysis */}
       <Card className="border-border/50 shadow-card">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <Target className="w-5 h-5 text-secondary" />
-            </div>
-            <div>
-              <CardTitle>Strategic Recommendation</CardTitle>
-              <CardDescription>AI-generated marketing strategy</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="font-medium">Website & Goal Analysis</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-foreground leading-relaxed">{strategy.overallStrategy}</p>
+          <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{strategy.websiteAnalysis}</p>
+          <div className="mt-6 pt-6 border-t border-border/30">
+            <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{strategy.strategicApproach}</p>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Budget Allocation */}
+      {/* Budget Allocation Summary */}
       <Card className="border-border/50 shadow-card">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <CardTitle>Budget Allocation</CardTitle>
-              <CardDescription>Recommended spend distribution across channels</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="font-medium">Budget Allocation</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {strategy.channels.map((channel, index) => (
-            <div key={channel.name} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${chartColors[index % chartColors.length]}`} />
-                  <span className="font-medium">{channel.name}</span>
-                </div>
+        <CardContent>
+          <div className="space-y-3">
+            {strategy.channels.map((channel, index) => (
+              <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-accent/5 border border-border/30">
+                <span className="font-medium">{channel.name}</span>
                 <div className="text-right">
-                  <div className="font-bold text-lg">{channel.allocation}%</div>
-                  <div className="text-xs text-muted-foreground">
-                    ROAS: {channel.expectedROAS.toFixed(2)}x
+                  <span className="text-lg font-bold text-primary">${channel.allocation}</span>
+                  <span className="text-sm text-muted-foreground ml-2">({channel.percentage}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Predicted Metrics Table */}
+      <Card className="border-border/50 shadow-card">
+        <CardHeader>
+          <CardTitle className="font-medium">Predicted Metrics for ${totalBudget} Ad Spend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Metric</TableHead>
+                  {strategy.channels.map((channel, index) => (
+                    <TableHead key={index}>{channel.name}</TableHead>
+                  ))}
+                  <TableHead>Total / Blended</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Ad Spend Allocation</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>${channel.allocation.toFixed(2)}</TableCell>
+                  ))}
+                  <TableCell>${totalBudget.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Predicted Clicks</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>{channel.predictedMetrics.clicks}</TableCell>
+                  ))}
+                  <TableCell>{strategy.totalPredictedResults.totalClicks}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Predicted Avg. CPC</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>{channel.predictedMetrics.averageCPC}</TableCell>
+                  ))}
+                  <TableCell>-</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Predicted Conversion Rate</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>{channel.predictedMetrics.conversionRate}</TableCell>
+                  ))}
+                  <TableCell>-</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">New Conversions</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>{channel.predictedMetrics.conversions}</TableCell>
+                  ))}
+                  <TableCell>{strategy.totalPredictedResults.totalConversions}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Cost Per Acquisition (CPA)</TableCell>
+                  {strategy.channels.map((channel, index) => (
+                    <TableCell key={index}>{channel.predictedMetrics.costPerAcquisition}</TableCell>
+                  ))}
+                  <TableCell>{strategy.totalPredictedResults.blendedCPA}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Detailed Channel Strategies */}
+      {strategy.channels.map((channel, index) => (
+        <Card key={index} className="border-border/50 shadow-card">
+          <CardHeader>
+            <CardTitle className="font-medium">
+              {index + 1}. {channel.name} (${channel.allocation})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{channel.strategy}</p>
+              
+              <div className="pt-4 border-t border-border/30">
+                <h4 className="font-semibold mb-3">Predicted Metrics for {channel.name} (${channel.allocation} Spend):</h4>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
+                    <div className="text-sm text-muted-foreground">Average CPC</div>
+                    <div className="text-lg font-semibold">{channel.predictedMetrics.averageCPC}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
+                    <div className="text-sm text-muted-foreground">Website Clicks</div>
+                    <div className="text-lg font-semibold">{channel.predictedMetrics.clicks}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
+                    <div className="text-sm text-muted-foreground">Conversion Rate</div>
+                    <div className="text-lg font-semibold">{channel.predictedMetrics.conversionRate}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
+                    <div className="text-sm text-muted-foreground">Predicted Conversions</div>
+                    <div className="text-lg font-semibold">{channel.predictedMetrics.conversions}</div>
                   </div>
                 </div>
               </div>
-              <Progress value={channel.allocation} className="h-2" />
-              <p className="text-sm text-muted-foreground">{channel.reasoning}</p>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ))}
 
-      {/* Expected Results */}
-      <Card className="border-border/50 shadow-card bg-gradient-to-br from-card to-card/50">
+      {/* Total Predicted Results */}
+      <Card className="border-border/50 shadow-card bg-primary/5">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <CardTitle>Projected Results</CardTitle>
-              <CardDescription>Expected performance metrics</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="font-medium">Total Predicted Results (${totalBudget} Budget)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Projected Revenue</div>
-              <div className="text-3xl font-bold text-success">
-                ${strategy.expectedResults.projectedRevenue.toLocaleString()}
-              </div>
+          <div className="grid gap-4 md:grid-cols-3 mb-4">
+            <div className="p-4 rounded-lg bg-background border border-border/30">
+              <div className="text-sm text-muted-foreground mb-1">Total Website Clicks</div>
+              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.totalClicks}</div>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Expected ROAS</div>
-              <div className="text-3xl font-bold text-primary">
-                {strategy.expectedResults.projectedROAS.toFixed(2)}x
-              </div>
+            <div className="p-4 rounded-lg bg-background border border-border/30">
+              <div className="text-sm text-muted-foreground mb-1">Total Conversions</div>
+              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.totalConversions}</div>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Timeframe</div>
-              <div className="text-3xl font-bold text-secondary">
-                {strategy.expectedResults.timeframe}
-              </div>
+            <div className="p-4 rounded-lg bg-background border border-border/30">
+              <div className="text-sm text-muted-foreground mb-1">Blended CPA</div>
+              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.blendedCPA}</div>
             </div>
           </div>
+          <p className="text-foreground/80 leading-relaxed">{strategy.totalPredictedResults.summary}</p>
         </CardContent>
       </Card>
     </div>

@@ -8,17 +8,27 @@ import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
 import { StrategyDisplay } from "@/components/StrategyDisplay";
 
 interface Strategy {
+  websiteAnalysis: string;
+  strategicApproach: string;
   channels: Array<{
     name: string;
     allocation: number;
-    expectedROAS: number;
-    reasoning: string;
+    percentage: number;
+    strategy: string;
+    predictedMetrics: {
+      dailyBudget: number;
+      averageCPC: string;
+      clicks: string;
+      conversionRate: string;
+      conversions: string;
+      costPerAcquisition: string;
+    };
   }>;
-  overallStrategy: string;
-  expectedResults: {
-    projectedRevenue: number;
-    projectedROAS: number;
-    timeframe: string;
+  totalPredictedResults: {
+    totalClicks: string;
+    totalConversions: string;
+    blendedCPA: string;
+    summary: string;
   };
 }
 
