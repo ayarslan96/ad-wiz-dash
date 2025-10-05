@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, LogOut } from "lucide-react";
 import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
 import { StrategyDisplay } from "@/components/StrategyDisplay";
+import { FollowUpQuestions } from "@/components/FollowUpQuestions";
 
 interface Strategy {
   websiteAnalysis: string;
@@ -97,7 +98,12 @@ const Dashboard = () => {
 
           <WebsiteAnalyzer onStrategyGenerated={setStrategy} />
 
-          {strategy && <StrategyDisplay strategy={strategy} />}
+          {strategy && (
+            <>
+              <StrategyDisplay strategy={strategy} />
+              <FollowUpQuestions strategy={strategy} />
+            </>
+          )}
         </div>
       </main>
     </div>
