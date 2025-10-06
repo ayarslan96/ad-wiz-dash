@@ -94,9 +94,8 @@ export const FollowUpQuestions = ({ strategy }: FollowUpQuestionsProps) => {
         </div>
 
         {answer && (
-          <div className="mt-4 p-4 rounded-lg bg-muted">
-            <p className="text-sm font-medium mb-2">Answer:</p>
-            <p className="text-sm whitespace-pre-wrap">{answer}</p>
+          <div className="mt-6 p-6 rounded-xl bg-gradient-to-br from-card/50 to-card border border-border/50 backdrop-blur-sm">
+            <p className="text-base leading-relaxed whitespace-pre-wrap">{answer}</p>
           </div>
         )}
       </CardContent>
