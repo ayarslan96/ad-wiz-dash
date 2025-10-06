@@ -1,198 +1,204 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface StrategyProps {
   strategy: {
-    websiteAnalysis: string;
-    strategicApproach: string;
-    channels: Array<{
-      name: string;
-      allocation: number;
-      percentage: number;
-      strategy: string;
-      predictedMetrics: {
-        dailyBudget: number;
-        averageCPC: string;
-        clicks: string;
-        conversionRate: string;
-        conversions: string;
-        costPerAcquisition: string;
-      };
-    }>;
-    totalPredictedResults: {
-      totalClicks: string;
-      totalConversions: string;
-      blendedCPA: string;
-      summary: string;
-    };
+    content: string;
   };
 }
 
 export const StrategyDisplay = ({ strategy }: StrategyProps) => {
-  const totalBudget = strategy.channels.reduce((sum, channel) => sum + channel.allocation, 0);
+  // Parse the markdown-like content into structured sections
+  const renderContent = (content: string) => {
+    const lines = content.split('\n');
+    const elements: JSX.Element[] = [];
+    let currentSection: string[] = [];
+    let inTable = false;
+    let tableHeaders: string[] = [];
+    let tableRows: string[][] = [];
+    let inList = false;
+    let listItems: JSX.Element[] = [];
+
+    const flushSection = () => {
+      if (currentSection.length > 0) {
+        const text = currentSection.join(' ');
+        // Check for bold markers
+        if (text.includes('**')) {
+          const parts = text.split(/\*\*(.*?)\*\*/g);
+          elements.push(
+            <p key={elements.length} className="text-muted-foreground leading-relaxed mb-4">
+              {parts.map((part, i) => 
+                i % 2 === 1 ? <strong key={i} className="font-semibold text-foreground">{part}</strong> : part
+              )}
+            </p>
+          );
+        } else {
+          elements.push(
+            <p key={elements.length} className="text-muted-foreground leading-relaxed mb-4">
+              {text}
+            </p>
+          );
+        }
+        currentSection = [];
+      }
+    };
+
+    const flushList = () => {
+      if (listItems.length > 0) {
+        elements.push(
+          <ul key={elements.length} className="space-y-2 mb-4">
+            {listItems}
+          </ul>
+        );
+        listItems = [];
+        inList = false;
+      }
+    };
+
+    const flushTable = () => {
+      if (tableHeaders.length > 0 && tableRows.length > 0) {
+        elements.push(
+          <div key={elements.length} className="overflow-x-auto mb-6 rounded-xl border border-border/50">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  {tableHeaders.map((header, i) => (
+                    <th key={i} className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {tableRows.map((row, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    {row.map((cell, j) => (
+                      <td key={j} className="px-4 py-3 text-sm text-muted-foreground">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        tableHeaders = [];
+        tableRows = [];
+        inTable = false;
+      }
+    };
+
+    lines.forEach((line) => {
+      // Main headings
+      if (line.startsWith('# ')) {
+        flushSection();
+        flushTable();
+        flushList();
+        elements.push(
+          <h2 key={elements.length} className="text-2xl font-bold text-foreground mb-4 mt-8 first:mt-0">
+            {line.replace('# ', '')}
+          </h2>
+        );
+      }
+      // Subheadings
+      else if (line.startsWith('## ')) {
+        flushSection();
+        flushTable();
+        flushList();
+        elements.push(
+          <h3 key={elements.length} className="text-xl font-semibold text-foreground mb-3 mt-6">
+            {line.replace('## ', '')}
+          </h3>
+        );
+      }
+      // Sub-subheadings
+      else if (line.startsWith('### ')) {
+        flushSection();
+        flushTable();
+        flushList();
+        elements.push(
+          <h4 key={elements.length} className="text-lg font-semibold text-foreground mb-2 mt-4">
+            {line.replace('### ', '')}
+          </h4>
+        );
+      }
+      // Horizontal rules
+      else if (line.trim() === '---') {
+        flushSection();
+        flushTable();
+        flushList();
+        elements.push(
+          <hr key={elements.length} className="border-border/50 my-8" />
+        );
+      }
+      // Table detection
+      else if (line.includes('|') && line.split('|').length > 2) {
+        flushSection();
+        flushList();
+        const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+        
+        if (!inTable) {
+          // First row is headers
+          tableHeaders = cells;
+          inTable = true;
+        } else if (cells.every(cell => cell.match(/^[-:]+$/))) {
+          // Skip separator row
+        } else {
+          // Data row
+          tableRows.push(cells);
+        }
+      }
+      // Bullet points
+      else if (line.trim().startsWith('- ') || line.trim().startsWith('• ')) {
+        flushSection();
+        flushTable();
+        const content = line.replace(/^[-•]\s+/, '');
+        const parts = content.split(/\*\*(.*?)\*\*/g);
+        listItems.push(
+          <li key={`list-${elements.length}-${listItems.length}`} className="text-muted-foreground leading-relaxed ml-6 list-disc">
+            {parts.map((part, i) => 
+              i % 2 === 1 ? <strong key={i} className="font-semibold text-foreground">{part}</strong> : part
+            )}
+          </li>
+        );
+        inList = true;
+      }
+      // Regular paragraphs
+      else if (line.trim()) {
+        flushTable();
+        if (inList) {
+          flushList();
+        }
+        currentSection.push(line.trim());
+      }
+      // Empty line
+      else {
+        flushSection();
+        flushTable();
+        if (inList) {
+          flushList();
+        }
+      }
+    });
+
+    flushSection();
+    flushTable();
+    flushList();
+    return elements;
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Website & Goal Analysis */}
-      <Card className="border-border/50 shadow-card">
-        <CardHeader>
-          <CardTitle className="font-medium">Website & Goal Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{strategy.websiteAnalysis}</p>
-          <div className="mt-6 pt-6 border-t border-border/30">
-            <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{strategy.strategicApproach}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Budget Allocation Summary */}
-      <Card className="border-border/50 shadow-card">
-        <CardHeader>
-          <CardTitle className="font-medium">Budget Allocation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {strategy.channels.map((channel, index) => (
-              <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-accent/5 border border-border/30">
-                <span className="font-medium">{channel.name}</span>
-                <div className="text-right">
-                  <span className="text-lg font-bold text-primary">${channel.allocation}</span>
-                  <span className="text-sm text-muted-foreground ml-2">({channel.percentage}%)</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Predicted Metrics Table */}
-      <Card className="border-border/50 shadow-card">
-        <CardHeader>
-          <CardTitle className="font-medium">Predicted Metrics for ${totalBudget} Ad Spend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Metric</TableHead>
-                  {strategy.channels.map((channel, index) => (
-                    <TableHead key={index}>{channel.name}</TableHead>
-                  ))}
-                  <TableHead>Total / Blended</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Ad Spend Allocation</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>${channel.allocation.toFixed(2)}</TableCell>
-                  ))}
-                  <TableCell>${totalBudget.toFixed(2)}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Predicted Clicks</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>{channel.predictedMetrics.clicks}</TableCell>
-                  ))}
-                  <TableCell>{strategy.totalPredictedResults.totalClicks}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Predicted Avg. CPC</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>{channel.predictedMetrics.averageCPC}</TableCell>
-                  ))}
-                  <TableCell>-</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Predicted Conversion Rate</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>{channel.predictedMetrics.conversionRate}</TableCell>
-                  ))}
-                  <TableCell>-</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">New Conversions</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>{channel.predictedMetrics.conversions}</TableCell>
-                  ))}
-                  <TableCell>{strategy.totalPredictedResults.totalConversions}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Cost Per Acquisition (CPA)</TableCell>
-                  {strategy.channels.map((channel, index) => (
-                    <TableCell key={index}>{channel.predictedMetrics.costPerAcquisition}</TableCell>
-                  ))}
-                  <TableCell>{strategy.totalPredictedResults.blendedCPA}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Detailed Channel Strategies */}
-      {strategy.channels.map((channel, index) => (
-        <Card key={index} className="border-border/50 shadow-card">
-          <CardHeader>
-            <CardTitle className="font-medium">
-              {index + 1}. {channel.name} (${channel.allocation})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{channel.strategy}</p>
-              
-              <div className="pt-4 border-t border-border/30">
-                <h4 className="font-semibold mb-3">Predicted Metrics for {channel.name} (${channel.allocation} Spend):</h4>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
-                    <div className="text-sm text-muted-foreground">Average CPC</div>
-                    <div className="text-lg font-semibold">{channel.predictedMetrics.averageCPC}</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
-                    <div className="text-sm text-muted-foreground">Website Clicks</div>
-                    <div className="text-lg font-semibold">{channel.predictedMetrics.clicks}</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
-                    <div className="text-sm text-muted-foreground">Conversion Rate</div>
-                    <div className="text-lg font-semibold">{channel.predictedMetrics.conversionRate}</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-accent/5 border border-border/30">
-                    <div className="text-sm text-muted-foreground">Predicted Conversions</div>
-                    <div className="text-lg font-semibold">{channel.predictedMetrics.conversions}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-
-      {/* Total Predicted Results */}
-      <Card className="border-border/50 shadow-card bg-primary/5">
-        <CardHeader>
-          <CardTitle className="font-medium">Total Predicted Results (${totalBudget} Budget)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3 mb-4">
-            <div className="p-4 rounded-lg bg-background border border-border/30">
-              <div className="text-sm text-muted-foreground mb-1">Total Website Clicks</div>
-              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.totalClicks}</div>
-            </div>
-            <div className="p-4 rounded-lg bg-background border border-border/30">
-              <div className="text-sm text-muted-foreground mb-1">Total Conversions</div>
-              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.totalConversions}</div>
-            </div>
-            <div className="p-4 rounded-lg bg-background border border-border/30">
-              <div className="text-sm text-muted-foreground mb-1">Blended CPA</div>
-              <div className="text-2xl font-bold text-primary">{strategy.totalPredictedResults.blendedCPA}</div>
-            </div>
-          </div>
-          <p className="text-foreground/80 leading-relaxed">{strategy.totalPredictedResults.summary}</p>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="overflow-hidden border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm">
+      <CardHeader className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Your Personalized Ad Strategy
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-8">
+        <div className="prose prose-sm max-w-none">
+          {renderContent(strategy.content)}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

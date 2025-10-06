@@ -9,28 +9,7 @@ import { StrategyDisplay } from "@/components/StrategyDisplay";
 import { FollowUpQuestions } from "@/components/FollowUpQuestions";
 
 interface Strategy {
-  websiteAnalysis: string;
-  strategicApproach: string;
-  channels: Array<{
-    name: string;
-    allocation: number;
-    percentage: number;
-    strategy: string;
-    predictedMetrics: {
-      dailyBudget: number;
-      averageCPC: string;
-      clicks: string;
-      conversionRate: string;
-      conversions: string;
-      costPerAcquisition: string;
-    };
-  }>;
-  totalPredictedResults: {
-    totalClicks: string;
-    totalConversions: string;
-    blendedCPA: string;
-    summary: string;
-  };
+  content: string;
 }
 
 const Dashboard = () => {
