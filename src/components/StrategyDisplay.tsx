@@ -25,15 +25,15 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
         if (text.includes('**')) {
           const parts = text.split(/\*\*(.*?)\*\*/g);
           elements.push(
-            <p key={elements.length} className="text-muted-foreground leading-relaxed mb-4">
+            <p key={elements.length} className="text-foreground/80 leading-relaxed mb-4 text-base">
               {parts.map((part, i) => 
-                i % 2 === 1 ? <strong key={i} className="font-semibold text-foreground">{part}</strong> : part
+                i % 2 === 1 ? <strong key={i} className="font-bold text-foreground">{part}</strong> : part
               )}
             </p>
           );
         } else {
           elements.push(
-            <p key={elements.length} className="text-muted-foreground leading-relaxed mb-4">
+            <p key={elements.length} className="text-foreground/80 leading-relaxed mb-4 text-base">
               {text}
             </p>
           );
@@ -45,7 +45,7 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
     const flushList = () => {
       if (listItems.length > 0) {
         elements.push(
-          <ul key={elements.length} className="space-y-2 mb-4">
+          <ul key={elements.length} className="space-y-3 mb-6 pl-2">
             {listItems}
           </ul>
         );
@@ -57,22 +57,22 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
     const flushTable = () => {
       if (tableHeaders.length > 0 && tableRows.length > 0) {
         elements.push(
-          <div key={elements.length} className="overflow-x-auto mb-6 rounded-xl border border-border/50">
+          <div key={elements.length} className="overflow-x-auto mb-8 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5 shadow-lg">
             <table className="w-full">
-              <thead className="bg-muted/50">
+              <thead className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20">
                 <tr>
                   {tableHeaders.map((header, i) => (
-                    <th key={i} className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                    <th key={i} className="px-6 py-4 text-left text-sm font-bold text-foreground tracking-wide">
                       {header}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-border/30">
                 {tableRows.map((row, i) => (
-                  <tr key={i} className="hover:bg-muted/30">
+                  <tr key={i} className="hover:bg-primary/5 transition-colors">
                     {row.map((cell, j) => (
-                      <td key={j} className="px-4 py-3 text-sm text-muted-foreground">
+                      <td key={j} className="px-6 py-4 text-sm font-medium text-foreground/90">
                         {cell}
                       </td>
                     ))}
@@ -95,7 +95,7 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
         flushTable();
         flushList();
         elements.push(
-          <h2 key={elements.length} className="text-2xl font-bold text-foreground mb-4 mt-8 first:mt-0">
+          <h2 key={elements.length} className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-6 mt-10 first:mt-0">
             {line.replace('# ', '')}
           </h2>
         );
@@ -106,7 +106,8 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
         flushTable();
         flushList();
         elements.push(
-          <h3 key={elements.length} className="text-xl font-semibold text-foreground mb-3 mt-6">
+          <h3 key={elements.length} className="text-2xl font-bold text-foreground mb-4 mt-8 flex items-center gap-3">
+            <span className="w-1 h-6 bg-gradient-to-b from-primary to-secondary rounded-full"></span>
             {line.replace('## ', '')}
           </h3>
         );
@@ -117,7 +118,7 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
         flushTable();
         flushList();
         elements.push(
-          <h4 key={elements.length} className="text-lg font-semibold text-foreground mb-2 mt-4">
+          <h4 key={elements.length} className="text-xl font-semibold text-foreground/90 mb-3 mt-6">
             {line.replace('### ', '')}
           </h4>
         );
@@ -155,9 +156,9 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
         const content = line.replace(/^[-•]\s+/, '');
         const parts = content.split(/\*\*(.*?)\*\*/g);
         listItems.push(
-          <li key={`list-${elements.length}-${listItems.length}`} className="text-muted-foreground leading-relaxed ml-6 list-disc">
+          <li key={`list-${elements.length}-${listItems.length}`} className="text-foreground/80 leading-relaxed ml-6 list-disc marker:text-primary">
             {parts.map((part, i) => 
-              i % 2 === 1 ? <strong key={i} className="font-semibold text-foreground">{part}</strong> : part
+              i % 2 === 1 ? <strong key={i} className="font-bold text-foreground">{part}</strong> : part
             )}
           </li>
         );
@@ -188,14 +189,14 @@ export const StrategyDisplay = ({ strategy }: StrategyProps) => {
   };
 
   return (
-    <Card className="overflow-hidden border-border/50 shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-sm">
-      <CardHeader className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardTitle className="text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    <Card className="overflow-hidden border-primary/20 shadow-2xl bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm">
+      <CardHeader className="border-b border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
+        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
           Your Personalized Ad Strategy
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-8">
-        <div className="prose prose-sm max-w-none">
+      <CardContent className="p-8 lg:p-10">
+        <div className="max-w-none space-y-2">
           {renderContent(strategy.content)}
         </div>
       </CardContent>
