@@ -42,8 +42,10 @@ With a modest $250 budget to get more traffic, the most profitable strategy is t
 
 ## Budget Allocation
 
-- **Google Search Ads:** $175 (70% of budget)
-- **X (Twitter) Ads:** $75 (30% of budget)
+| Platform | Budget | Percentage |
+|----------|--------|------------|
+| Google Search Ads | $175.00 | 70% |
+| X (Twitter) Ads | $75.00 | 30% |
 
 ## Predicted Metrics for a $250 Ad Spend
 
