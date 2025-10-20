@@ -1,7 +1,7 @@
 project_id = "rhtpwxtlfeuswspmlaeg"
 
 [functions.analyze-website]
-verify_jwt = true
+verify_jwt = false
 
 [functions.answer-followup]
 verify_jwt = true
