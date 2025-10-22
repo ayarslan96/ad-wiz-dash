@@ -32,98 +32,90 @@ export const WebsiteAnalyzer = ({
     setAnalyzing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-website', {
-        body: {
-          websiteUrl,
-          budget: parseFloat(budget),
-          goal
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ websiteUrl, budget: parseFloat(budget), goal }),
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok || !response.body) throw new Error('Failed to start analysis');
 
-      if (!data?.strategy) {
-        throw new Error('No strategy data received');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) accumulatedText += content;
+          } catch {
+            continue;
+          }
+        }
       }
 
-      // Format the structured response into markdown content
-      const { strategy } = data;
+      const jsonMatch = accumulatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonString = jsonMatch ? jsonMatch[1] : accumulatedText;
+      const strategy = JSON.parse(jsonString);
+      
       let content = `# Website & Goal Analysis\n\n${strategy.websiteAnalysis}\n\n`;
       content += `## Strategic Approach\n\n${strategy.strategicApproach}\n\n`;
       
-      // Budget allocation table
       if (strategy.channels?.length > 0) {
-        content += `## Budget Allocation\n\n`;
-        content += `| Platform | Budget | Percentage |\n`;
-        content += `|----------|--------|------------|\n`;
+        content += `## Budget Allocation\n\n| Platform | Budget | Percentage |\n|----------|--------|------------|\n`;
         strategy.channels.forEach((channel: any) => {
           content += `| ${channel.name} | $${channel.allocation.toFixed(2)} | ${channel.percentage}% |\n`;
         });
-        content += `\n`;
-      }
-
-      // Predicted metrics table
-      if (strategy.channels?.length > 0) {
-        content += `## Predicted Metrics Overview\n\n`;
-        content += `| Metric | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.name} | `;
-        });
-        content += `Total / Blended |\n`;
-        content += `|--------|`;
+        content += `\n## Predicted Metrics Overview\n\n| Metric | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.name} | `);
+        content += `Total / Blended |\n|--------|`;
         strategy.channels.forEach(() => content += `-----------|`);
-        content += `-----------------|\n`;
-        
-        content += `| Ad Spend Allocation | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `$${channel.allocation.toFixed(2)} | `;
-        });
-        content += `$${budget} |\n`;
-        
-        content += `| Daily Budget | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `$${channel.predictedMetrics.dailyBudget} | `;
-        });
-        content += `- |\n`;
-        
-        content += `| Predicted Clicks | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.predictedMetrics.clicks} | `;
-        });
-        content += `${strategy.totalPredictedResults.totalClicks} |\n`;
-        
-        content += `| Predicted Avg. CPC | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.predictedMetrics.averageCPC} | `;
-        });
-        content += `- |\n`;
-        
-        content += `| Predicted Conversion Rate | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.predictedMetrics.conversionRate} | `;
-        });
-        content += `- |\n`;
-        
-        content += `| New Conversions | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.predictedMetrics.conversions} | `;
-        });
-        content += `${strategy.totalPredictedResults.totalConversions} |\n`;
-        
-        content += `| Cost Per Acquisition (CPA) | `;
-        strategy.channels.forEach((channel: any) => {
-          content += `${channel.predictedMetrics.costPerAcquisition} | `;
-        });
+        content += `-----------------|\n| Ad Spend Allocation | `;
+        strategy.channels.forEach((channel: any) => content += `$${channel.allocation.toFixed(2)} | `);
+        content += `$${budget} |\n| Daily Budget | `;
+        strategy.channels.forEach((channel: any) => content += `$${channel.predictedMetrics.dailyBudget} | `);
+        content += `- |\n| Predicted Clicks | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.predictedMetrics.clicks} | `);
+        content += `${strategy.totalPredictedResults.totalClicks} |\n| Predicted Avg. CPC | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.predictedMetrics.averageCPC} | `);
+        content += `- |\n| Predicted Conversion Rate | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.predictedMetrics.conversionRate} | `);
+        content += `- |\n| New Conversions | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.predictedMetrics.conversions} | `);
+        content += `${strategy.totalPredictedResults.totalConversions} |\n| Cost Per Acquisition (CPA) | `;
+        strategy.channels.forEach((channel: any) => content += `${channel.predictedMetrics.costPerAcquisition} | `);
         content += `${strategy.totalPredictedResults.blendedCPA} |\n\n`;
       }
 
-      // Channel details
       strategy.channels?.forEach((channel: any, index: number) => {
-        content += `---\n\n## ${index + 1}. ${channel.name}: $${channel.allocation.toFixed(2)}\n\n`;
-        content += `${channel.strategy}\n\n`;
+        content += `---\n\n## ${index + 1}. ${channel.name}: $${channel.allocation.toFixed(2)}\n\n${channel.strategy}\n\n`;
       });
 
-      // Summary
       if (strategy.totalPredictedResults?.summary) {
         content += `---\n\n## Total Predicted Results\n\n${strategy.totalPredictedResults.summary}\n`;
       }

@@ -23,74 +23,35 @@ serve(async (req) => {
     // Fetch website content for analysis
     let websiteContent = '';
     try {
-      const websiteResponse = await fetch(websiteUrl, {
+      // Ensure URL has protocol
+      const url = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+      const websiteResponse = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(5000) // 5 second timeout
       });
       
       if (websiteResponse.ok) {
         const html = await websiteResponse.text();
-        // Extract text content from HTML (basic extraction)
         websiteContent = html
           .replace(/<script[^>]*>.*?<\/script>/gis, '')
           .replace(/<style[^>]*>.*?<\/style>/gis, '')
           .replace(/<[^>]*>/g, ' ')
           .replace(/\s+/g, ' ')
           .trim()
-          .substring(0, 3000); // Limit content length
+          .substring(0, 2000); // Reduced content length
       }
     } catch (error) {
       console.log('Failed to fetch website content:', error);
-      websiteContent = 'Website content could not be fetched for analysis.';
+      websiteContent = '';
     }
 
-    const systemPrompt = `You are an expert marketing strategist specializing in digital advertising and ROAS optimization. 
-Analyze the provided website content, budget, and marketing goal to create a comprehensive, data-driven marketing strategy.
+    const systemPrompt = `You are a marketing strategist. Create a JSON strategy with: websiteAnalysis, strategicApproach, channels array (each with: name, allocation, percentage, strategy, predictedMetrics with dailyBudget, averageCPC, clicks, conversionRate, conversions, costPerAcquisition), totalPredictedResults (totalClicks, totalConversions, blendedCPA, summary). Focus on 1-2 high-intent channels, realistic metrics, and ensure budget adds up correctly.`;
 
-Your response must be a valid JSON object with this exact structure:
-{
-  "websiteAnalysis": "Detailed analysis of what the website/business does, its value proposition, and target audience",
-  "strategicApproach": "Explanation of why this budget allocation strategy makes sense for this specific business and goal",
-  "channels": [
-    {
-      "name": "Channel name (e.g., Google Search Ads, X (Twitter) Ads, etc.)",
-      "allocation": dollar amount as a number,
-      "percentage": percentage as a number,
-      "strategy": "Detailed campaign strategy including targeting, ad creative approach, and tactics",
-      "predictedMetrics": {
-        "dailyBudget": number,
-        "averageCPC": "range as string (e.g., $4.00 - $7.00)",
-        "clicks": "range as string (e.g., 25 - 44)",
-        "conversionRate": "percentage as string (e.g., ~7.0%)",
-        "conversions": "range as string (e.g., 2 - 3)",
-        "costPerAcquisition": "range as string (e.g., $58 - $88)"
-      }
-    }
-  ],
-  "totalPredictedResults": {
-    "totalClicks": "range as string",
-    "totalConversions": "range as string",
-    "blendedCPA": "range as string",
-    "summary": "Brief summary of expected outcomes"
-  }
-}
-
-Requirements:
-- Focus on 1-2 high-intent channels that match the budget and goal
-- Provide realistic, data-driven predictions based on industry benchmarks
-- Include specific targeting strategies and ad creative recommendations
-- Calculate precise metrics including CPC, conversion rates, and CPA
-- Ensure all budget allocations add up to the total budget provided`;
-
-    const userPrompt = `Website URL: ${websiteUrl}
-Monthly Budget: $${budget}
-Marketing Goal: ${goal}
-
-Website Content Analysis:
-${websiteContent}
-
-Based on the actual website content above, provide a detailed marketing strategy with budget allocation across the most effective channels for this specific business. Consider the business model, target audience, and value proposition evident from the website content.`;
+    const userPrompt = websiteContent 
+      ? `URL: ${websiteUrl}, Budget: $${budget}, Goal: ${goal}. Content: ${websiteContent}. Provide marketing strategy.`
+      : `URL: ${websiteUrl}, Budget: $${budget}, Goal: ${goal}. Provide marketing strategy based on URL and goal.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -105,6 +66,7 @@ Based on the actual website content above, provide a detailed marketing strategy
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
+        stream: true,
       }),
     });
 
@@ -114,35 +76,15 @@ Based on the actual website content above, provide a detailed marketing strategy
       throw new Error(`AI API request failed: ${response.status}`);
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
-
-    if (!aiResponse) {
-      throw new Error('No response from AI');
-    }
-
-    console.log('AI Response:', aiResponse);
-
-    // Parse the JSON response
-    let strategy;
-    try {
-      // Try to extract JSON if it's wrapped in markdown code blocks
-      const jsonMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonString = jsonMatch ? jsonMatch[1] : aiResponse;
-      strategy = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('AI Response was:', aiResponse);
-      throw new Error('Failed to parse AI response as JSON');
-    }
-
-    return new Response(
-      JSON.stringify({ strategy }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    // Stream the response back to client
+    return new Response(response.body, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+      },
+    });
   } catch (error) {
     console.error('Error in analyze-website function:', error);
     return new Response(
