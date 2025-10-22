@@ -47,7 +47,7 @@ serve(async (req) => {
       websiteContent = '';
     }
 
-    const systemPrompt = `You are a marketing strategist. Create a JSON strategy with: websiteAnalysis (STRING text analysis), strategicApproach (STRING text), channels array (each with: name, allocation, percentage, strategy (STRING), predictedMetrics object), totalPredictedResults (totalClicks, totalConversions, blendedCPA, summary STRING). All text fields must be plain strings, not objects.`;
+    const systemPrompt = `You are a marketing strategist. Create a JSON strategy with: websiteAnalysis (STRING), strategicApproach (STRING), channels array with each channel having: name (STRING), allocation (NUMBER), percentage (NUMBER), strategy (STRING), predictedMetrics object with ALL fields: dailyBudget (NUMBER), averageCPC (NUMBER), clicks (NUMBER), conversionRate (NUMBER), conversions (NUMBER), costPerAcquisition (NUMBER). Also include totalPredictedResults with: totalClicks (NUMBER), totalConversions (NUMBER), blendedCPA (NUMBER), summary (STRING). IMPORTANT: All numeric fields must have actual numbers, never null or undefined.`;
 
     const userPrompt = websiteContent 
       ? `URL: ${websiteUrl}, Budget: $${budget}, Goal: ${goal}. Content: ${websiteContent}. Provide marketing strategy.`
