@@ -50,8 +50,61 @@ serve(async (req) => {
     // Step 2: Use ChatGPT to analyze website content and goal
     console.log('Step 1: ChatGPT analyzing website and goal...');
     const chatGPTPrompt = websiteContent 
-      ? `Analyze this website and marketing goal. Website URL: ${websiteUrl}, Content: ${websiteContent}. Marketing Goal: ${goal}. Budget: $${budget}/month. Provide a detailed analysis of: 1) What the business does and its value proposition, 2) Target audience, 3) Key selling points, 4) How this relates to the marketing goal. Be concise but thorough.`
-      : `Analyze this marketing scenario. Website URL: ${websiteUrl}, Marketing Goal: ${goal}, Budget: $${budget}/month. Based on the URL and goal, provide analysis of likely business type, target audience, and marketing approach.`;
+      ? `You are a senior business and marketing analyst. Analyze this website in detail:
+
+Website URL: ${websiteUrl}
+Website Content: ${websiteContent}
+Marketing Goal: ${goal}
+Monthly Budget: $${budget}
+
+Provide a comprehensive analysis covering:
+
+1. BUSINESS ANALYSIS (be specific):
+   - What exactly does this business offer (products/services)?
+   - What is their unique value proposition?
+   - What industry/niche do they operate in?
+   - What stage of business maturity are they at?
+
+2. TARGET AUDIENCE (be detailed):
+   - Who are their ideal customers (demographics, psychographics)?
+   - What pain points does this audience have?
+   - Where does this audience spend time online?
+   - What is their likely buying behavior?
+
+3. COMPETITIVE LANDSCAPE:
+   - What type of competition do they likely face?
+   - What makes them different from competitors?
+
+4. MARKETING GOAL ALIGNMENT:
+   - How does their stated goal (${goal}) align with their business?
+   - What specific metrics should success be measured by?
+   - What are the likely conversion points?
+
+Be specific, actionable, and avoid generic statements. Base your analysis on the actual content and URL provided.`
+      : `You are a senior business and marketing analyst. Based on the limited information available, provide your best analysis:
+
+Website URL: ${websiteUrl}
+Marketing Goal: ${goal}
+Monthly Budget: $${budget}
+
+Provide a detailed educated analysis covering:
+
+1. BUSINESS INFERENCE (based on URL and goal):
+   - What type of business is this likely to be?
+   - What products/services might they offer?
+   - What value proposition might they have?
+
+2. TARGET AUDIENCE (educated guess):
+   - Who would likely be their ideal customers?
+   - What demographics and psychographics are probable?
+   - Where might this audience be found online?
+
+3. MARKETING APPROACH:
+   - Given the goal "${goal}", what strategy makes sense?
+   - What channels would be most effective?
+   - What should be the primary focus?
+
+Be specific and actionable, even with limited information. Make informed assumptions based on the URL structure and stated goal.`;
 
     const chatGPTResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -62,10 +115,10 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-5-mini-2025-08-07',
         messages: [
-          { role: 'system', content: 'You are a business analyst specializing in understanding websites and marketing goals.' },
+          { role: 'system', content: 'You are a senior business and marketing analyst with 15+ years of experience. You provide specific, detailed, and actionable insights based on website analysis. You avoid generic statements and focus on concrete observations and recommendations.' },
           { role: 'user', content: chatGPTPrompt }
         ],
-        max_completion_tokens: 1000,
+        max_completion_tokens: 2000,
       }),
     });
 
